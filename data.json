@@ -16,5 +16,17 @@
     "title": "Sarah Vaughan and Clifford Brown",
     "artist": "Sarah Vaughan",
     "price": 39.99
+  },
+  {
+    "id": "4",
+    "title": "Blackout",
+    "artist": "Scorpions",
+    "price": 50.25
+  },
+  {
+    "id": "5",
+    "title": "Blackout",
+    "artist": "Scorpions",
+    "price": 50.25
   }
 ]
