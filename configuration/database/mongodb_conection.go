@@ -31,7 +31,7 @@ func InitConnection() *mongo.Client {
 		panic(err)
 	}
 
-	loggerMessage("MongoDB conected!")
+	//loggerMessage("MongoDB conected!")
 
 	return client
 }

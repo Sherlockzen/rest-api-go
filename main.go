@@ -2,12 +2,10 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	mongodb "example/rest-api-go/configuration/database"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"log"
 	"net/http"
 	"os"
 )
@@ -47,8 +45,10 @@ func main() {
 
 	//show the users in the userData collection
 
-	router.GET("/albums", getAlbums)
-	router.POST("/albums/post", postAlbums)
+	router.GET("/users", getAlbums)
+	router.POST("/users/post", postAlbums)
+	router.GET("/users/:name", getName)
+	router.DELETE("/users/:name", deleteName)
 
 	// router.Run("localhost:8080")
 	port := os.Getenv("PORT")
@@ -56,6 +56,32 @@ func main() {
 		port = "3000"
 	}
 	router.Run("0.0.0.0:" + port)
+}
+
+func deleteName(c *gin.Context) {
+	name := c.Param("name")
+	collection := mongodb.InitConnection().Database("users").Collection("userData")
+
+	res, err := collection.DeleteOne(context.Background(), bson.D{{"name", name}})
+	if err != nil {
+		panic(err)
+	}
+	c.IndentedJSON(http.StatusOK, res)
+}
+
+func getName(c *gin.Context) {
+	nam := c.Param("name")
+
+	collection := mongodb.InitConnection().Database("users").Collection("userData")
+	cur, err := collection.Find(context.Background(), bson.D{{"name", nam}})
+	if err != nil {
+		panic(err)
+	}
+	var result []User
+	if err = cur.All(context.Background(), &result); err != nil {
+		panic(err)
+	}
+	c.IndentedJSON(http.StatusOK, result)
 }
 
 // getAlbums responds with the list of all albums as JSON
@@ -84,24 +110,36 @@ func getAlbums(c *gin.Context) {
 }
 
 func postAlbums(c *gin.Context) {
-	var newAlbum album
+	//var newAlbum album
+	//
+	//if err := c.BindJSON(&newAlbum); err != nil {
+	//	return
+	//}
+	//
+	//content, er := os.ReadFile("data.json")
+	//if er != nil {
+	//	log.Fatal(er)
+	//}
+	//
+	//er = json.Unmarshal(content, &albums)
+	//
+	//albums := append(albums, newAlbum)
+	//jsonAlbums, _ := json.Marshal(albums)
+	//err := os.WriteFile("data.json", jsonAlbums, 0666)
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
 
-	if err := c.BindJSON(&newAlbum); err != nil {
-		return
+	//insert into collection
+	var newUser User
+	if err := c.BindJSON(&newUser); err != nil {
+		panic(err)
 	}
-
-	content, er := os.ReadFile("data.json")
-	if er != nil {
-		log.Fatal(er)
-	}
-
-	er = json.Unmarshal(content, &albums)
-
-	albums := append(albums, newAlbum)
-	jsonAlbums, _ := json.Marshal(albums)
-	err := os.WriteFile("data.json", jsonAlbums, 0666)
+	collection := mongodb.InitConnection().Database("users").Collection("userData")
+	res, err := collection.InsertOne(context.Background(), newUser)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
-	c.IndentedJSON(http.StatusCreated, newAlbum)
+
+	c.IndentedJSON(http.StatusCreated, res)
 }
