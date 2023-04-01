@@ -1,8 +1,12 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
+	mongodb "example/rest-api-go/configuration/database"
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"log"
 	"net/http"
 	"os"
@@ -16,10 +20,32 @@ type album struct {
 	Price  float64 `json:"price"`
 }
 
+// user type on mongoDB
+type User struct {
+	ID   primitive.ObjectID `bson:"_id,omitempty"`
+	Name string             `bson:"name"`
+	Age  int32              `bson:"age"`
+}
+
 var albums []album
 
 func main() {
 	router := gin.Default()
+
+	//Conection with MongoDB
+
+	//testing insert into collection
+	//user := User{
+	//	Name: "hewerton",
+	//	Age:  30,
+	//}
+	//
+	//result, err := collection.InsertOne(context.Background(), user)
+	//if err != nil {
+	//	panic(err)
+	//}
+
+	//show the users in the userData collection
 
 	router.GET("/albums", getAlbums)
 	router.POST("/albums/post", postAlbums)
@@ -37,14 +63,24 @@ func getAlbums(c *gin.Context) {
 
 	albums = []album{}
 
-	content, er := os.ReadFile("data.json")
-	if er != nil {
-		log.Fatal(er)
+	//content, er := os.ReadFile("data.json")
+	//if er != nil {
+	//	log.Fatal(er)
+	//}
+	//er = json.Unmarshal(content, &albums)
+
+	collection := mongodb.InitConnection().Database("users").Collection("userData")
+	cur, err := collection.Find(context.Background(), bson.D{})
+	if err != nil {
+		panic(err)
 	}
+	var result []User
+	if err = cur.All(context.Background(), &result); err != nil {
+		panic(err)
+	}
+	//fmt.Printf("Usuarios cadastrados: %v\n", result)
 
-	er = json.Unmarshal(content, &albums)
-
-	c.IndentedJSON(http.StatusOK, albums)
+	c.IndentedJSON(http.StatusOK, result)
 }
 
 func postAlbums(c *gin.Context) {
